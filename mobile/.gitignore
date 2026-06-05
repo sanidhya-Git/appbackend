@@ -1,0 +1,11 @@
+node_modules/
+.gradle/
+local.properties
+*.keystore
+!debug.keystore
+build/
+ios/Pods/
+ios/build/
+*.lock
+.env
+.bundle/
