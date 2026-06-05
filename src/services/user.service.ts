@@ -194,6 +194,10 @@ export class UserService {
   }
 
   async getDashboard(userId: string) {
+    const cacheKey = `dashboard:${userId}`;
+    const cached = await CacheService.get<unknown>(cacheKey);
+    if (cached) return cached;
+
     const [user, recentEvents, totalPhotos, unreadNotifications] =
       await Promise.all([
         prisma.user.findUnique({
@@ -215,12 +219,9 @@ export class UserService {
         prisma.notification.count({ where: { userId, isRead: false } }),
       ]);
 
-    return {
-      user,
-      recentEvents,
-      totalPhotos,
-      unreadNotifications,
-    };
+    const result = { user, recentEvents, totalPhotos, unreadNotifications };
+    await CacheService.set(cacheKey, result, CACHE_TTL.SHORT);
+    return result;
   }
 }
 

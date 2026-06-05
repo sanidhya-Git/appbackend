@@ -75,7 +75,7 @@ export class AuthService {
     if (!isValid) throw new AppError('Invalid OTP', 400);
 
     const tokens = generateTokenPair(user.id, user.email, user.role);
-    const refreshTokenHash = await hashToken(tokens.refreshToken);
+    const refreshTokenHash = hashToken(tokens.refreshToken);
 
     const updated = await prisma.user.update({
       where: { id: user.id },
@@ -87,7 +87,10 @@ export class AuthService {
       },
     });
 
-    await sendWelcomeEmail(email, user.firstName);
+    // Fire and forget — don't block the response
+    sendWelcomeEmail(email, user.firstName).catch((err) =>
+      logger.warn('Welcome email failed:', err)
+    );
 
     return { user: this.sanitizeUser(updated), tokens };
   }
@@ -136,7 +139,7 @@ export class AuthService {
     if (!isValid) throw new AppError('Invalid credentials', 401);
 
     const tokens = generateTokenPair(user.id, user.email, user.role);
-    const refreshTokenHash = await hashToken(tokens.refreshToken);
+    const refreshTokenHash = hashToken(tokens.refreshToken);
 
     await prisma.user.update({
       where: { id: user.id },
@@ -182,7 +185,7 @@ export class AuthService {
     }
 
     const tokens = generateTokenPair(user.id, user.email, user.role);
-    const refreshTokenHash = await hashToken(tokens.refreshToken);
+    const refreshTokenHash = hashToken(tokens.refreshToken);
 
     await prisma.user.update({
       where: { id: user.id },
@@ -207,11 +210,11 @@ export class AuthService {
       throw new AppError('Invalid refresh token', 401);
     }
 
-    const isValid = await compareToken(refreshToken, user.refreshTokenHash);
+    const isValid = compareToken(refreshToken, user.refreshTokenHash);
     if (!isValid) throw new AppError('Invalid refresh token', 401);
 
     const tokens = generateTokenPair(user.id, user.email, user.role);
-    const refreshTokenHash = await hashToken(tokens.refreshToken);
+    const refreshTokenHash = hashToken(tokens.refreshToken);
 
     await prisma.user.update({
       where: { id: user.id },

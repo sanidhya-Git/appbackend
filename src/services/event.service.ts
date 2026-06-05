@@ -150,31 +150,31 @@ export class EventService {
   // ── List events (only accessible ones) ──────────────────────────────────
   async listEvents(userId: string, query: Record<string, unknown>) {
     const { page, limit, skip } = parsePagination(query);
+    const cacheKey = `events:list:${userId}:${page}:${limit}`;
+    const cached = await CacheService.get<unknown>(cacheKey);
+    if (cached) return cached;
+
+    const where = {
+      OR: [
+        { isPrivate: false },
+        { members: { some: { userId } } },
+      ],
+    };
 
     const [events, total] = await Promise.all([
       prisma.event.findMany({
-        where: {
-          OR: [
-            { isPrivate: false },
-            { members: { some: { userId } } },
-          ],
-        },
+        where,
         skip,
         take: limit,
         orderBy: { eventDate: 'desc' },
         include: { _count: { select: { photos: true } } },
       }),
-      prisma.event.count({
-        where: {
-          OR: [
-            { isPrivate: false },
-            { members: { some: { userId } } },
-          ],
-        },
-      }),
+      prisma.event.count({ where }),
     ]);
 
-    return { events, meta: paginationMeta(total, page, limit) };
+    const result = { events, meta: paginationMeta(total, page, limit) };
+    await CacheService.set(cacheKey, result, CACHE_TTL.SHORT);
+    return result;
   }
 
   // ── Get single event (with membership check) ─────────────────────────────
