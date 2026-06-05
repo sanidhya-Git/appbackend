@@ -4,6 +4,7 @@ import { AppError } from '../middleware/error.middleware';
 import { CacheService, CACHE_TTL } from '../config/redis';
 import { faceService } from './face.service';
 import { parsePagination, paginationMeta } from '../utils/response';
+import { PaginationMeta } from '../types';
 import { logger } from '../utils/logger';
 
 function generateInviteCode(): string {
@@ -151,7 +152,7 @@ export class EventService {
   async listEvents(userId: string, query: Record<string, unknown>) {
     const { page, limit, skip } = parsePagination(query);
     const cacheKey = `events:list:${userId}:${page}:${limit}`;
-    const cached = await CacheService.get<{ events: any[]; meta: Record<string, number> }>(cacheKey);
+    const cached = await CacheService.get<{ events: any[]; meta: PaginationMeta }>(cacheKey);
     if (cached) return cached;
 
     const where = {
