@@ -1,0 +1,39 @@
+services:
+  - type: web
+    name: event-photo-finder-api
+    runtime: node
+    plan: free
+    buildCommand: npm ci && npm run build && npx prisma generate
+    startCommand: node dist/server.js
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        sync: false
+      - key: JWT_ACCESS_SECRET
+        sync: false
+      - key: JWT_REFRESH_SECRET
+        sync: false
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_API_SECRET
+        sync: false
+      - key: SMTP_HOST
+        value: smtp.gmail.com
+      - key: SMTP_PORT
+        value: "587"
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASS
+        sync: false
+      - key: EMAIL_FROM
+        sync: false
+      - key: FACE_SERVICE_URL
+        value: http://localhost:8000
+      - key: ENCRYPTION_KEY
+        sync: false
+      - key: REDIS_URL
+        value: redis://localhost:6379

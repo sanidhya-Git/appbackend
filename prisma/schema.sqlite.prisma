@@ -1,0 +1,150 @@
+// SQLite-compatible schema for local testing (no array types)
+generator client {
+  provider = "prisma-client-js"
+  output   = "../node_modules/.prisma/client-sqlite"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+enum AuthProvider {
+  EMAIL
+  GOOGLE
+  APPLE
+}
+
+enum UserRole {
+  USER
+  ADMIN
+}
+
+enum NotificationType {
+  PHOTOS_FOUND
+  EVENT_ADDED
+  SYSTEM
+}
+
+model User {
+  id                String         @id @default(cuid())
+  email             String         @unique
+  passwordHash      String?
+  firstName         String
+  lastName          String
+  avatarUrl         String?
+  role              UserRole       @default(USER)
+  provider          AuthProvider   @default(EMAIL)
+  providerId        String?
+  isVerified        Boolean        @default(false)
+  isFaceRegistered  Boolean        @default(false)
+  refreshTokenHash  String?
+  otpHash           String?
+  otpExpiresAt      DateTime?
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+
+  faceEmbedding     FaceEmbedding?
+  photoMatches      PhotoMatch[]
+  notifications     Notification[]
+  favoritePhotos    FavoritePhoto[]
+}
+
+model FaceEmbedding {
+  id           String   @id @default(cuid())
+  userId       String   @unique
+  embeddingJson String  // JSON-serialized Float[]
+  quality      Float
+  modelVersion String   @default("insightface-v1")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Event {
+  id               String   @id @default(cuid())
+  name             String
+  description      String?
+  coverImageUrl    String?
+  cloudinaryFolder String   @unique
+  location         String?
+  eventDate        DateTime
+  totalPhotos      Int      @default(0)
+  isProcessed      Boolean  @default(false)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  photos           Photo[]
+  photoMatches     PhotoMatch[]
+}
+
+model Photo {
+  id              String   @id @default(cuid())
+  eventId         String
+  cloudinaryId    String   @unique
+  url             String
+  thumbnailUrl    String
+  width           Int?
+  height          Int?
+  faceCount       Int      @default(0)
+  isProcessed     Boolean  @default(false)
+  createdAt       DateTime @default(now())
+
+  event           Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  faceRegions     FaceRegion[]
+  photoMatches    PhotoMatch[]
+  favorites       FavoritePhoto[]
+}
+
+model FaceRegion {
+  id             String   @id @default(cuid())
+  photoId        String
+  embeddingJson  String   // JSON-serialized Float[]
+  bboxJson       String   // JSON-serialized bbox
+  confidence     Float
+  createdAt      DateTime @default(now())
+
+  photo          Photo    @relation(fields: [photoId], references: [id], onDelete: Cascade)
+}
+
+model PhotoMatch {
+  id          String   @id @default(cuid())
+  userId      String
+  photoId     String
+  eventId     String
+  similarity  Float
+  isViewed    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  photo       Photo    @relation(fields: [photoId], references: [id], onDelete: Cascade)
+  event       Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, photoId])
+}
+
+model FavoritePhoto {
+  id        String   @id @default(cuid())
+  userId    String
+  photoId   String
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  photo     Photo    @relation(fields: [photoId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, photoId])
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  title     String
+  body      String
+  type      NotificationType
+  dataJson  String?          // JSON-serialized data
+  isRead    Boolean          @default(false)
+  createdAt DateTime         @default(now())
+
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
