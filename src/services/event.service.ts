@@ -292,7 +292,7 @@ export class EventService {
     const photoMap = new Map(photos.map((p) => [p.id, p]));
 
     return {
-      photos: matchResults.map((m) => ({ ...photoMap.get(m.photoId), similarity: m.similarity })),
+      photos: matchResults.map((m) => ({ ...(photoMap.get(m.photoId) ?? {}), similarity: m.similarity })),
       total: matchResults.length,
     };
   }
