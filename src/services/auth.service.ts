@@ -119,7 +119,12 @@ export class AuthService {
       data: { otpHash, otpExpiresAt },
     });
 
-    await sendOTPEmail(email, user.firstName, otp);
+    try {
+      await sendOTPEmail(email, user.firstName, otp);
+    } catch (emailError) {
+      logger.warn('OTP email delivery failed:', emailError);
+      throw new AppError('Failed to send OTP email. Check SMTP configuration.', 500);
+    }
     return { message: 'OTP resent successfully' };
   }
 
