@@ -5,6 +5,8 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm ci
 
+RUN apk add --no-cache openssl
+
 COPY . .
 RUN npx prisma generate
 RUN npm run build
@@ -12,6 +14,8 @@ RUN npm run build
 FROM node:20-alpine AS runner
 
 WORKDIR /app
+
+RUN apk add --no-cache openssl
 
 RUN addgroup --system --gid 1001 nodejs && \
     adduser --system --uid 1001 express
