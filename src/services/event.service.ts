@@ -151,7 +151,7 @@ export class EventService {
   async listEvents(userId: string, query: Record<string, unknown>) {
     const { page, limit, skip } = parsePagination(query);
     const cacheKey = `events:list:${userId}:${page}:${limit}`;
-    const cached = await CacheService.get<unknown>(cacheKey);
+    const cached = await CacheService.get<{ events: any[]; meta: Record<string, number> }>(cacheKey);
     if (cached) return cached;
 
     const where = {
