@@ -1,3 +1,4 @@
+import http from 'http';
 import { app } from './app';
 import { env } from './config/env';
 import { connectDatabase, disconnectDatabase } from './config/database';
@@ -11,6 +12,16 @@ async function bootstrap(): Promise<void> {
   const server = app.listen(env.PORT, () => {
     logger.info(`Server running on port ${env.PORT} in ${env.NODE_ENV} mode`);
   });
+
+  // Keep-alive: ping /health every 14 min so Render free tier never sleeps
+  if (env.NODE_ENV === 'production') {
+    setInterval(() => {
+      http.get(`http://localhost:${env.PORT}/health`, (res) => {
+        res.resume();
+      }).on('error', () => {});
+    }, 14 * 60 * 1000);
+    logger.info('Keep-alive ping scheduled (14 min interval)');
+  }
 
   const shutdown = async (signal: string) => {
     logger.info(`${signal} received. Graceful shutdown...`);

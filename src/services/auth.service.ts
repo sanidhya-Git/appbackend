@@ -6,6 +6,8 @@ import {
   hashToken,
   compareToken,
   generateOTP,
+  hashOTP,
+  verifyOTPHash,
 } from '../utils/crypto';
 import { generateTokenPair, TokenPair, verifyRefreshToken } from '../utils/jwt';
 import { sendOTPEmail, sendWelcomeEmail } from '../utils/email';
@@ -27,14 +29,14 @@ export class AuthService {
     firstName: string,
     lastName: string
   ): Promise<{ message: string }> {
-    const existing = await prisma.user.findUnique({ where: { email } });
-    if (existing) {
-      throw new AppError('Email already registered', 409);
-    }
-
-    const passwordHash = await hashPassword(password);
+    // Parallelize DB check + password hashing — saves ~50-100ms
     const otp = generateOTP();
-    const otpHash = await hashPassword(otp);
+    const otpHash = hashOTP(otp); // HMAC: instant
+    const [existing, passwordHash] = await Promise.all([
+      prisma.user.findUnique({ where: { email } }),
+      hashPassword(password),
+    ]);
+    if (existing) throw new AppError('Email already registered', 409);
     const otpExpiresAt = new Date(Date.now() + OTP_EXPIRY_MINUTES * 60 * 1000);
 
     await prisma.user.create({
@@ -71,7 +73,7 @@ export class AuthService {
       throw new AppError('OTP expired', 400);
     }
 
-    const isValid = await comparePassword(otp, user.otpHash);
+    const isValid = verifyOTPHash(otp, user.otpHash!);
     if (!isValid) throw new AppError('Invalid OTP', 400);
 
     const tokens = generateTokenPair(user.id, user.email, user.role);
@@ -111,7 +113,7 @@ export class AuthService {
     }
 
     const otp = generateOTP();
-    const otpHash = await hashPassword(otp);
+    const otpHash = hashOTP(otp); // HMAC: instant
     const otpExpiresAt = new Date(Date.now() + OTP_EXPIRY_MINUTES * 60 * 1000);
 
     await prisma.user.update({
