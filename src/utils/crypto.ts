@@ -36,6 +36,22 @@ export function generateOTP(length = 6): string {
   return otp;
 }
 
+// HMAC-SHA256 for OTPs — instant (vs ~100ms bcrypt). Safe because OTPs
+// are rate-limited, short-lived (10 min), and the key is server-side only.
+export function hashOTP(otp: string): string {
+  return crypto
+    .createHmac('sha256', env.ENCRYPTION_KEY)
+    .update(otp)
+    .digest('hex');
+}
+
+export function verifyOTPHash(otp: string, storedHash: string): boolean {
+  const expected = Buffer.from(hashOTP(otp));
+  const stored = Buffer.from(storedHash);
+  if (expected.length !== stored.length) return false;
+  return crypto.timingSafeEqual(expected, stored);
+}
+
 export function generateSecureToken(bytes = 32): string {
   return crypto.randomBytes(bytes).toString('hex');
 }
