@@ -6,9 +6,7 @@ import axios, {
 import { TokenStorage } from '../services/storage';
 import { useAuthStore } from '../store/slices/authStore';
 
-const BASE_URL = __DEV__
-  ? 'http://localhost:5001/api/v1' // Physical device via ADB reverse tcp:5001
-  : 'https://your-production-api.com/api/v1';
+const BASE_URL = 'https://appbackend-1-4i4x.onrender.com/api/v1';
 
 let isRefreshing = false;
 let failedQueue: Array<{
@@ -29,7 +27,7 @@ function processQueue(error: unknown, token: string | null): void {
 
 export const apiClient: AxiosInstance = axios.create({
   baseURL: BASE_URL,
-  timeout: 30000,
+  timeout: 60000,
   headers: {
     'Content-Type': 'application/json',
     Accept: 'application/json',
