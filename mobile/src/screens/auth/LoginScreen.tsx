@@ -20,6 +20,7 @@ import { Button } from '../../components/ui/Button';
 import { useLogin, useGoogleAuth } from '../../hooks/useAuth';
 import { useUIStore } from '../../store/slices/uiStore';
 import { extractError } from '../../api/client';
+import axios from 'axios';
 import { Icon } from '../../components/ui/Icon';
 import { ms } from '../../utils/responsive';
 
@@ -64,7 +65,13 @@ export function LoginScreen({ navigation }: Props) {
     try {
       await loginMutation.mutateAsync({ email: email.trim(), password });
     } catch (error) {
-      showToast(extractError(error), 'error');
+      if (axios.isAxiosError(error) && error.response?.status === 403) {
+        // Account exists but email not verified — take them to OTP screen
+        showToast('Please verify your email first', 'info');
+        navigation.navigate('OTPVerification', { email: email.trim() });
+      } else {
+        showToast(extractError(error), 'error');
+      }
     }
   };
 
