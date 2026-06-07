@@ -56,8 +56,8 @@ app.get('/health', (_, res) => {
     uptime: process.uptime(),
     environment: env.NODE_ENV,
     email: {
-      configured: !!(env.SMTP_USER && env.SMTP_PASS),
-      smtp_user: env.SMTP_USER ? env.SMTP_USER.replace(/(.{3}).*(@.*)/, '$1***$2') : 'NOT SET',
+      configured: !!env.RESEND_API_KEY,
+      provider: env.RESEND_API_KEY ? 'resend' : 'not configured',
     },
   });
 });

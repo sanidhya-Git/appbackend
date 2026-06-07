@@ -1,19 +1,10 @@
-import nodemailer from 'nodemailer';
+import { Resend } from 'resend';
 import { env } from '../config/env';
 import { logger } from './logger';
 
-const transporter = nodemailer.createTransport({
-  service: 'gmail',
-  auth: {
-    user: env.SMTP_USER,
-    pass: env.SMTP_PASS,
-  },
-  pool: true,
-  maxConnections: 3,
-  connectionTimeout: 30000,
-  greetingTimeout: 15000,
-  socketTimeout: 30000,
-});
+const resend = new Resend(env.RESEND_API_KEY);
+
+const FROM = env.RESEND_FROM || `${env.APP_NAME} <onboarding@resend.dev>`;
 
 export async function sendOTPEmail(
   to: string,
@@ -21,8 +12,8 @@ export async function sendOTPEmail(
   otp: string
 ): Promise<void> {
   try {
-    await transporter.sendMail({
-      from: `"${env.APP_NAME}" <${env.SMTP_USER || env.EMAIL_FROM}>`,
+    const { error } = await resend.emails.send({
+      from: FROM,
       to,
       subject: `${otp} is your ${env.APP_NAME} verification code`,
       html: `
@@ -38,6 +29,10 @@ export async function sendOTPEmail(
         </div>
       `,
     });
+    if (error) {
+      logger.error('Resend OTP email error:', error);
+      throw new Error(error.message);
+    }
   } catch (error) {
     logger.error('Failed to send OTP email:', error);
     throw error;
@@ -49,19 +44,19 @@ export async function sendWelcomeEmail(
   firstName: string
 ): Promise<void> {
   try {
-    await transporter.sendMail({
-      from: `"${env.APP_NAME}" <${env.SMTP_USER || env.EMAIL_FROM}>`,
+    const { error } = await resend.emails.send({
+      from: FROM,
       to,
-      subject: `Welcome to ${env.APP_NAME}! 🎉`,
+      subject: `Welcome to ${env.APP_NAME}!`,
       html: `
         <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 600px; margin: 0 auto; padding: 40px 20px;">
           <h1 style="color: #1a1a2e;">Welcome, ${firstName}!</h1>
           <p style="color: #666; font-size: 16px;">Your account is verified. Register your face to start finding your photos in events.</p>
-          <a href="${env.FRONTEND_URL}" style="display: inline-block; background: #6366f1; color: white; padding: 14px 32px; border-radius: 12px; text-decoration: none; font-weight: 600; margin-top: 24px;">Open App</a>
         </div>
       `,
     });
+    if (error) logger.warn('Welcome email error:', error);
   } catch (error) {
-    logger.error('Failed to send welcome email:', error);
+    logger.warn('Failed to send welcome email:', error);
   }
 }

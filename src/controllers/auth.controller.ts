@@ -116,12 +116,11 @@ export class AuthController {
     try {
       const { sendOTPEmail } = await import('../utils/email');
       const { env } = await import('../config/env');
-      const to = req.body?.email || 'test@example.com';
-      if (!env.SMTP_USER || !env.SMTP_PASS) {
+      const to = req.body?.email || 'delivered@resend.dev';
+      if (!env.RESEND_API_KEY) {
         res.status(500).json({
           success: false,
-          message: 'SMTP_USER or SMTP_PASS not configured in environment variables',
-          configured: { smtp_user: !!env.SMTP_USER, smtp_pass: !!env.SMTP_PASS },
+          message: 'RESEND_API_KEY not set in environment variables',
         });
         return;
       }
