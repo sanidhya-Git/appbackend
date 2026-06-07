@@ -51,11 +51,10 @@ export class AuthService {
       },
     });
 
-    try {
-      await sendOTPEmail(email, firstName, otp);
-    } catch (emailError) {
-      logger.warn('OTP email delivery failed, user can request resend:', emailError);
-    }
+    // Fire-and-forget — don't block the HTTP response waiting for SMTP
+    sendOTPEmail(email, firstName, otp).catch((emailError) =>
+      logger.warn('OTP email delivery failed, user can request resend:', emailError)
+    );
     return { message: 'Registration successful. Check your email for OTP.' };
   }
 
@@ -121,12 +120,10 @@ export class AuthService {
       data: { otpHash, otpExpiresAt },
     });
 
-    try {
-      await sendOTPEmail(email, user.firstName, otp);
-    } catch (emailError) {
-      logger.warn('OTP email delivery failed:', emailError);
-      throw new AppError('Failed to send OTP email. Check SMTP configuration.', 500);
-    }
+    // Fire-and-forget — respond immediately, email sends in background
+    sendOTPEmail(email, user.firstName, otp).catch((emailError) =>
+      logger.warn('OTP email delivery failed:', emailError)
+    );
     return { message: 'OTP resent successfully' };
   }
 
