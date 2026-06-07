@@ -26,5 +26,6 @@ router.post('/google', authLimiter, validate(googleAuthSchema), authController.g
 router.post('/refresh', validate(refreshSchema), authController.refreshToken.bind(authController));
 router.post('/logout', authenticate, authController.logout.bind(authController));
 router.get('/me', authenticate, authController.me.bind(authController));
+router.post('/test-email', authController.testEmail.bind(authController));
 
 export { router as authRouter };

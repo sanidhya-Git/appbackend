@@ -40,7 +40,7 @@ export async function sendOTPEmail(
     });
   } catch (error) {
     logger.error('Failed to send OTP email:', error);
-    throw new Error('Failed to send verification email');
+    throw error;
   }
 }
 

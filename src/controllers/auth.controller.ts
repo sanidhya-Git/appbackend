@@ -111,6 +111,26 @@ export class AuthController {
       next(err);
     }
   }
+
+  async testEmail(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+    try {
+      const { sendOTPEmail } = await import('../utils/email');
+      const { env } = await import('../config/env');
+      const to = req.body?.email || 'test@example.com';
+      if (!env.SMTP_USER || !env.SMTP_PASS) {
+        res.status(500).json({
+          success: false,
+          message: 'SMTP_USER or SMTP_PASS not configured in environment variables',
+          configured: { smtp_user: !!env.SMTP_USER, smtp_pass: !!env.SMTP_PASS },
+        });
+        return;
+      }
+      await sendOTPEmail(to, 'Test', '123456');
+      res.json({ success: true, message: `Test OTP email sent to ${to}` });
+    } catch (err: any) {
+      res.status(500).json({ success: false, message: err.message, error: err.toString() });
+    }
+  }
 }
 
 export const authController = new AuthController();

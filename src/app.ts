@@ -55,6 +55,10 @@ app.get('/health', (_, res) => {
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
     environment: env.NODE_ENV,
+    email: {
+      configured: !!(env.SMTP_USER && env.SMTP_PASS),
+      smtp_user: env.SMTP_USER ? env.SMTP_USER.replace(/(.{3}).*(@.*)/, '$1***$2') : 'NOT SET',
+    },
   });
 });
 
