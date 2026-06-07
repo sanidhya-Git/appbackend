@@ -37,3 +37,7 @@ services:
         sync: false
       - key: REDIS_URL
         value: redis://localhost:6379
+      - key: RENDER_EXTERNAL_URL
+        value: https://appbackend-1-4i4x.onrender.com
+      - key: APP_NAME
+        value: EventPhotoFinder

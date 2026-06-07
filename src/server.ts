@@ -1,4 +1,5 @@
 import http from 'http';
+import https from 'https';
 import { app } from './app';
 import { env } from './config/env';
 import { connectDatabase, disconnectDatabase } from './config/database';
@@ -13,14 +14,16 @@ async function bootstrap(): Promise<void> {
     logger.info(`Server running on port ${env.PORT} in ${env.NODE_ENV} mode`);
   });
 
-  // Keep-alive: ping /health every 14 min so Render free tier never sleeps
-  if (env.NODE_ENV === 'production') {
+  // Keep-alive: ping the external URL every 14 min so Render never sleeps.
+  // Must use the public URL — Render only counts external traffic, not localhost.
+  if (env.NODE_ENV === 'production' && env.RENDER_EXTERNAL_URL) {
+    const pingUrl = `${env.RENDER_EXTERNAL_URL}/health`;
     setInterval(() => {
-      http.get(`http://localhost:${env.PORT}/health`, (res) => {
-        res.resume();
-      }).on('error', () => {});
+      https.get(pingUrl, (res) => { res.resume(); }).on('error', (err) => {
+        logger.warn('Keep-alive ping failed:', err.message);
+      });
     }, 14 * 60 * 1000);
-    logger.info('Keep-alive ping scheduled (14 min interval)');
+    logger.info(`Keep-alive ping scheduled → ${pingUrl}`);
   }
 
   const shutdown = async (signal: string) => {

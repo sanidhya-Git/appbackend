@@ -22,7 +22,7 @@ export async function sendOTPEmail(
 ): Promise<void> {
   try {
     await transporter.sendMail({
-      from: `"${env.APP_NAME}" <${env.EMAIL_FROM}>`,
+      from: `"${env.APP_NAME}" <${env.SMTP_USER || env.EMAIL_FROM}>`,
       to,
       subject: `${otp} is your ${env.APP_NAME} verification code`,
       html: `
@@ -50,7 +50,7 @@ export async function sendWelcomeEmail(
 ): Promise<void> {
   try {
     await transporter.sendMail({
-      from: `"${env.APP_NAME}" <${env.EMAIL_FROM}>`,
+      from: `"${env.APP_NAME}" <${env.SMTP_USER || env.EMAIL_FROM}>`,
       to,
       subject: `Welcome to ${env.APP_NAME}! 🎉`,
       html: `

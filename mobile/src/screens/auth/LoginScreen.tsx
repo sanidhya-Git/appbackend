@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   ScrollView,
@@ -37,6 +37,18 @@ export function LoginScreen({ navigation }: Props) {
   const loginMutation = useLogin();
   const googleAuthMutation = useGoogleAuth();
   const showToast = useUIStore((s) => s.showToast);
+  const [slowWarning, setSlowWarning] = useState(false);
+  const slowTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    if (loginMutation.isPending || googleAuthMutation.isPending) {
+      slowTimer.current = setTimeout(() => setSlowWarning(true), 8000);
+    } else {
+      if (slowTimer.current) clearTimeout(slowTimer.current);
+      setSlowWarning(false);
+    }
+    return () => { if (slowTimer.current) clearTimeout(slowTimer.current); };
+  }, [loginMutation.isPending, googleAuthMutation.isPending]);
 
   const validate = () => {
     const newErrors = { email: '', password: '' };
@@ -125,6 +137,15 @@ export function LoginScreen({ navigation }: Props) {
             loading={loginMutation.isPending}
             style={{ marginTop: spacing[8] }}
           />
+          {slowWarning && (
+            <Text
+              variant="caption"
+              color={colors.textTertiary}
+              style={{ textAlign: 'center', marginTop: spacing[3] }}
+            >
+              Server is starting up, please wait a moment...
+            </Text>
+          )}
 
           {/* Divider */}
           <View style={[styles.divider, { marginVertical: spacing[6] }]}>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   ScrollView,
@@ -38,6 +38,18 @@ export function RegisterScreen({ navigation }: Props) {
 
   const registerMutation = useRegister();
   const showToast = useUIStore((s) => s.showToast);
+  const [slowWarning, setSlowWarning] = useState(false);
+  const slowTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    if (registerMutation.isPending) {
+      slowTimer.current = setTimeout(() => setSlowWarning(true), 8000);
+    } else {
+      if (slowTimer.current) clearTimeout(slowTimer.current);
+      setSlowWarning(false);
+    }
+    return () => { if (slowTimer.current) clearTimeout(slowTimer.current); };
+  }, [registerMutation.isPending]);
 
   const setField = (key: keyof typeof form) => (val: string) => {
     setForm((prev) => ({ ...prev, [key]: val }));
@@ -169,6 +181,15 @@ export function RegisterScreen({ navigation }: Props) {
             loading={registerMutation.isPending}
             style={{ marginTop: spacing[8] }}
           />
+          {slowWarning && (
+            <Text
+              variant="caption"
+              color={colors.textTertiary}
+              style={{ textAlign: 'center', marginTop: spacing[3] }}
+            >
+              Server is starting up, please wait a moment...
+            </Text>
+          )}
 
           <View style={styles.footer}>
             <Text variant="body" color={colors.textSecondary}>

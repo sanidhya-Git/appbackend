@@ -31,6 +31,8 @@ const envSchema = z.object({
 
   GOOGLE_CLIENT_ID: z.string().optional(),
 
+  RENDER_EXTERNAL_URL: z.string().optional(),
+
   FACE_SERVICE_URL: z.string().default('http://localhost:8000'),
   FACE_SIMILARITY_THRESHOLD: z.string().default('0.6').transform(Number),
 
